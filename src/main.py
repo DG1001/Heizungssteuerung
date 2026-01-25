@@ -274,12 +274,10 @@ HTML_PAGE = """<!DOCTYPE html>
   </div>
  </div>
  <div class="card">
-  <canvas id="myChart"></canvas>
+  <div id="graph" style="width:100%;height:200px;"></div>
  </div>
 
  <script>
-  let chart;
-  
   async function update() {
     try {
       let r = await fetch('/api/data');
@@ -292,15 +290,37 @@ HTML_PAGE = """<!DOCTYPE html>
       st.innerText = d.heating ? "HEIZT" : "AUS";
       st.className = d.heating ? "val status-on" : "val status-off";
       
-      // Update Graph
-      if(d.history.length > 0 && chart) {
-         let labels = d.history.map(x => new Date(x[0]*1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}));
-         let data = d.history.map(x => x[1]);
-         chart.data.labels = labels;
-         chart.data.datasets[0].data = data;
-         chart.update();
+      // Update SVG Graph
+      if(d.history.length > 1) {
+         renderSVG(d.history);
       }
     } catch(e) { console.log(e); }
+  }
+
+  function renderSVG(history) {
+    const graphDiv = document.getElementById('graph');
+    const width = graphDiv.clientWidth;
+    const height = graphDiv.clientHeight;
+    
+    const temps = history.map(p => p[1]);
+    const minTemp = Math.min(...temps);
+    const maxTemp = Math.max(...temps);
+    const tempRange = maxTemp - minTemp;
+    
+    const points = history.map((p, i) => {
+        const x = (i / (history.length - 1)) * width;
+        const y = tempRange === 0 ? height / 2 : height - ((p[1] - minTemp) / tempRange) * height;
+        return `${x},${y}`;
+    }).join(' ');
+
+    const svg = `
+      <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+        <polyline points="${points}" style="fill:none;stroke:#faa;stroke-width:2" />
+        <text x="5" y="15" fill="#fff">${maxTemp.toFixed(1)}</text>
+        <text x="5" y="${height - 5}" fill="#fff">${minTemp.toFixed(1)}</text>
+      </svg>
+    `;
+    graphDiv.innerHTML = svg;
   }
 
   async function setTemp() {
@@ -310,13 +330,6 @@ HTML_PAGE = """<!DOCTYPE html>
   }
 
   window.onload = function() {
-    const ctx = document.getElementById('myChart').getContext('2d');
-    chart = new Chart(ctx, {
-        type: 'line',
-        data: { labels: [], datasets: [{ label: 'Temp °C', data: [], borderColor: '#faa', tension: 0.3 }] },
-        options: { scales: { y: { beginAtZero: false } } }
-    });
-    
     update();
     setInterval(update, 5000); // Alle 5 Sek Refresh
   };
