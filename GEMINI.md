@@ -91,6 +91,18 @@ temp = (raw - (raw % 1000)) / 10000.0
 * When in AP mode, the ESP32 acts as an Access Point (SSID/Pass configured in `settings.json`).
 * Configure Tasmota Plug to connect to ESP32's SSID.
 * **Crucially:** Configure Tasmota Plug with a **static IP address** (e.g., `192.168.4.100`) to avoid conflicts with ESP32's DHCP server for other clients. This IP must then be set in `settings.json`.
+
+    **Tasmota Static IP Configuration:**
+    To configure a static IP on your Tasmota device (e.g., `192.168.4.100` if the ESP32 AP is `192.168.4.1`), use the following commands in the Tasmota console:
+    ```
+    IPAddress1 192.168.4.100  (Static IP for Tasmota)
+    IPAddress2 192.168.4.1    (Gateway IP - ESP32 AP's IP)
+    IPAddress3 255.255.255.0  (Subnet Mask)
+    IPAddress4 192.168.4.1    (DNS Server - ESP32 AP's IP or a public DNS like 8.8.8.8)
+    WifiConfig 5             (Save Wi-Fi configuration)
+    Restart 1                (Reboot Tasmota device)
+    ```
+    Ensure that `"tasmota_ip"` in your ESP32's `settings.json` matches the `IPAddress1` configured here.
 * Custom SVG graph implemented, replacing Chart.js, to save space and remove external dependency.
 
 

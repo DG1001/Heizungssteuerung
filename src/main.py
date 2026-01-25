@@ -71,24 +71,44 @@ def save_settings():
 # NETZWERK & TASMOTA HELFER
 # -------------------------------------------------------------------------
 async def wifi_connect():
+    # Deactivate both interfaces to start fresh
+    sta_if = network.WLAN(network.STA_IF)
+    ap_if = network.WLAN(network.AP_IF)
+    sta_if.active(False)
+    ap_if.active(False)
+
     if SETTINGS.get("wifi_mode") == "ap":
-        wlan = network.WLAN(network.AP_IF)
-        wlan.config(essid=SETTINGS["wifi_ssid"], password=SETTINGS["wifi_pass"])
-        wlan.active(True)
+        print("[WIFI] Starting in Access Point (AP) mode...")
+        ap_if.active(True)
+        ap_if.config(essid=SETTINGS["wifi_ssid"], password=SETTINGS["wifi_pass"], authmode=network.AUTH_WPA2_PSK)
         # Static IP for the ESP32 AP
-        wlan.ifconfig(('192.168.4.1', '255.255.255.0', '192.168.4.1', '8.8.8.8'))
+        ap_if.ifconfig(('192.168.4.1', '255.255.255.0', '192.168.4.1', '8.8.8.8'))
+        
+        # Wait a moment for AP to be fully up
+        await asyncio.sleep(1)
+
         print("[WIFI] AP created, SSID:", SETTINGS["wifi_ssid"])
-        print("[WIFI] IP Address:", wlan.ifconfig()[0])
-    else:
-        wlan = network.WLAN(network.STA_IF)
-        wlan.active(True)
-        wlan.connect(SETTINGS["wifi_ssid"], SETTINGS["wifi_pass"])
+        print("[WIFI] IP Address:", ap_if.ifconfig()[0])
+        return ap_if
+    else: # Default to Station (STA) mode
+        print("[WIFI] Starting in Station (STA) mode...")
+        sta_if.active(True)
+        sta_if.connect(SETTINGS["wifi_ssid"], SETTINGS["wifi_pass"])
         print("[WIFI] Verbinde...", end="")
-        while not wlan.isconnected():
+        
+        # Wait for connection with a timeout
+        max_wait = 10
+        while max_wait > 0 and not sta_if.isconnected():
             print(".", end="")
-            await asyncio.sleep(0.5)
-        print("\n[WIFI] Verbunden:", wlan.ifconfig()[0])
-    return wlan
+            await asyncio.sleep(1)
+            max_wait -= 1
+        
+        if sta_if.isconnected():
+            print("\n[WIFI] Verbunden:", sta_if.ifconfig()[0])
+            return sta_if
+        else:
+            print("\n[WIFI] Verbindung fehlgeschlagen.")
+            return None
 
 async def tasmota_cmnd(cmnd):
     """Sendet HTTP Request asynchron (nicht blockierend)"""
@@ -401,8 +421,12 @@ async def handle_client(reader, writer):
 
 async def main():
     load_settings()
-    await wifi_connect()
-    
+    wlan = await wifi_connect()
+
+    if not wlan:
+        print("[SYS] Wi-Fi not available. Can't continue.")
+        return
+
     # Scanner instanzieren
     scanner = BLEScanner()
     
