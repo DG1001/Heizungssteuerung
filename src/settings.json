@@ -1,1 +1,9 @@
-{"hysteresis": 1.0, "target_temp": 19.0}
+{
+  "target_temp": 19.0,
+  "hysteresis": 1.0,
+  "wifi_ssid": "",
+  "wifi_pass": "",
+  "tasmota_ip": "",
+  "govee_mac": "",
+  "wifi_mode": "sta"
+}

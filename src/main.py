@@ -18,18 +18,20 @@ except ImportError:
 # -------------------------------------------------------------------------
 
 # Feste Hardware-Settings
-WIFI_SSID = ""
-WIFI_PASS = ""
-
-TASMOTA_IP = "" # IP der Steckdose
+# WIFI_SSID = ""
+# WIFI_PASS = ""
+# TASMOTA_IP = "" # IP der Steckdose
 TASMOTA_PORT = 80
-
-GOVEE_MAC = ""
+# GOVEE_MAC = ""
 
 # Standard-Werte (werden überschrieben, falls config.json existiert)
 SETTINGS = {
     "target_temp": 22.0,   # Heizung AN unter diesem Wert
-    "hysteresis": 1.0      # Heizung AUS über (target + hysteresis)
+    "hysteresis": 1.0,      # Heizung AUS über (target + hysteresis)
+    "wifi_ssid": "",
+    "wifi_pass": "",
+    "tasmota_ip": "",
+    "govee_mac": ""
 }
 
 # Laufzeit-Daten (State)
@@ -53,8 +55,8 @@ def load_settings():
             data = json.load(f)
             SETTINGS.update(data)
             print("[SYS] Einstellungen geladen:", SETTINGS)
-    except:
-        print("[SYS] Keine gespeicherten Einstellungen, nutze Defaults.")
+    except Exception as e:
+        print("[SYS] Keine gespeicherten Einstellungen oder Fehler beim Laden, nutze Defaults.", e)
 
 def save_settings():
     try:
@@ -70,7 +72,7 @@ def save_settings():
 async def wifi_connect():
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
-    wlan.connect(WIFI_SSID, WIFI_PASS)
+    wlan.connect(SETTINGS["wifi_ssid"], SETTINGS["wifi_pass"])
     print("[WIFI] Verbinde...", end="")
     while not wlan.isconnected():
         print(".", end="")
@@ -83,10 +85,10 @@ async def tasmota_cmnd(cmnd):
     reader, writer = None, None
     try:
         # Asynchrone Verbindung öffnen
-        reader, writer = await asyncio.open_connection(TASMOTA_IP, TASMOTA_PORT)
+        reader, writer = await asyncio.open_connection(SETTINGS["tasmota_ip"], TASMOTA_PORT)
         
         cmnd_enc = cmnd.replace(" ", "%20")
-        req = f"GET /cm?cmnd={cmnd_enc} HTTP/1.1\r\nHost: {TASMOTA_IP}\r\nConnection: close\r\n\r\n"
+        req = f"GET /cm?cmnd={cmnd_enc} HTTP/1.1\r\nHost: {SETTINGS['tasmota_ip']}\r\nConnection: close\r\n\r\n"
         
         writer.write(req.encode())
         await writer.drain()
@@ -152,7 +154,7 @@ class BLEScanner:
         self.ble.active(True)
         self.ble.irq(self._irq)
         self.scanning = False
-        self.filter_mac = GOVEE_MAC.lower().replace("-", ":")
+        self.filter_mac = SETTINGS["govee_mac"].lower().replace("-", ":")
 
     def _irq(self, event, data):
         if event == 5: # SCAN_RESULT
