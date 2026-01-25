@@ -31,7 +31,8 @@ SETTINGS = {
     "wifi_ssid": "",
     "wifi_pass": "",
     "tasmota_ip": "",
-    "govee_mac": ""
+    "govee_mac": "",
+    "wifi_mode": "sta"
 }
 
 # Laufzeit-Daten (State)
@@ -70,14 +71,23 @@ def save_settings():
 # NETZWERK & TASMOTA HELFER
 # -------------------------------------------------------------------------
 async def wifi_connect():
-    wlan = network.WLAN(network.STA_IF)
-    wlan.active(True)
-    wlan.connect(SETTINGS["wifi_ssid"], SETTINGS["wifi_pass"])
-    print("[WIFI] Verbinde...", end="")
-    while not wlan.isconnected():
-        print(".", end="")
-        await asyncio.sleep(0.5)
-    print("\n[WIFI] Verbunden:", wlan.ifconfig()[0])
+    if SETTINGS.get("wifi_mode") == "ap":
+        wlan = network.WLAN(network.AP_IF)
+        wlan.config(essid=SETTINGS["wifi_ssid"], password=SETTINGS["wifi_pass"])
+        wlan.active(True)
+        # Static IP for the ESP32 AP
+        wlan.ifconfig(('192.168.4.1', '255.255.255.0', '192.168.4.1', '8.8.8.8'))
+        print("[WIFI] AP created, SSID:", SETTINGS["wifi_ssid"])
+        print("[WIFI] IP Address:", wlan.ifconfig()[0])
+    else:
+        wlan = network.WLAN(network.STA_IF)
+        wlan.active(True)
+        wlan.connect(SETTINGS["wifi_ssid"], SETTINGS["wifi_pass"])
+        print("[WIFI] Verbinde...", end="")
+        while not wlan.isconnected():
+            print(".", end="")
+            await asyncio.sleep(0.5)
+        print("\n[WIFI] Verbunden:", wlan.ifconfig()[0])
     return wlan
 
 async def tasmota_cmnd(cmnd):
