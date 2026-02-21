@@ -36,13 +36,34 @@ Die aktuelle Implementierung unterstützt nun zwei Betriebsmodi für WIFI, konfi
 
 **Wichtig für AP-Mode:** Wenn der ESP32 als Access Point fungiert, muss die Tasmota Steckdose mit einer **festen IP-Adresse** (z.B. `192.168.4.100`) konfiguriert werden. Diese Adresse muss dann auch im `settings.json` des ESP32 unter `"tasmota_ip"` hinterlegt werden. Dies verhindert IP-Konflikte, da der DHCP-Server des ESP32 diese Adresse dann nicht an andere Clients vergibt.
 
+### MQTT-Integration (STA-Mode)
+
+Im STA-Mode kann der ESP32 optional mit einem MQTT-Broker kommunizieren, was die Einbindung in Hausautomatisierungssysteme wie Home Assistant, openHAB oder ioBroker erleichtert. Die Konfiguration erfolgt in `settings.json`:
+
+```json
+"mqtt_broker": "192.168.1.10",
+"mqtt_port": 1883,
+"mqtt_user": "benutzer",
+"mqtt_pass": "passwort",
+"mqtt_topic": "heizung/esp32",
+"mqtt_publish_interval": 5
+```
+
+Der ESP32 veröffentlicht alle `mqtt_publish_interval` Minuten den aktuellen Status als JSON auf dem Topic `{mqtt_topic}/status`:
+
+```json
+{"target_temp": 19.0, "current_temp": 18.3, "current_hum": 52.1, "heating": true}
+```
+
+Die Zieltemperatur kann per MQTT gesetzt werden, indem ein Float-Wert (z.B. `21.5`) an das Topic `{mqtt_topic}/set/target_temp` gesendet wird. Der Wert wird sofort übernommen und in `settings.json` gespeichert. MQTT ist nur im STA-Mode aktiv und wird automatisch deaktiviert, wenn `mqtt_broker` leer bleibt.
+
 Für MicroPython kann man einen Webinstaller verwenden (funktioniert nicht mit allen Browsern): https://bipes.net.br/flash/2025/, die passende Firmware findet man hier: https://micropython.org/download/ESP32_GENERIC_C3/
 
 ## Software
 
 ![Web Oberfläche](screenshot.png)
 
-Die MicroPython Software für den ESP32 wurde fast komplett mit Hilfe von Google Gemini 3 erstellt. Enthalten ist eine kleine Webpage, welche per u.a. Smartphone verwendet werden kann. Das frühere Chart.js zur Diagrammdarstellung wurde durch eine ressourcenschonende, selbst implementierte SVG-Grafik ersetzt.
+Die MicroPython Software für den ESP32 wurde fast komplett mit Hilfe von Google Gemini 3 und Claude Code erstellt. Enthalten ist eine kleine Webpage, welche per u.a. Smartphone verwendet werden kann. Das frühere Chart.js zur Diagrammdarstellung wurde durch eine ressourcenschonende, selbst implementierte SVG-Grafik ersetzt. Zusätzlich unterstützt die Software im STA-Mode eine optionale MQTT-Anbindung zur Integration in Hausautomatisierungssysteme.
 
 ## Disclaimer
 

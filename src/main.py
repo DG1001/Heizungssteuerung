@@ -1,5 +1,5 @@
 # main.py (ESP32-C3)
-# Features: BLE Thermostat, Webserver, Graphing, Persistent Config
+# Features: BLE Thermostat, Webserver, Graphing, Persistent Config, MQTT
 import uasyncio as asyncio
 import bluetooth
 import network
@@ -32,7 +32,13 @@ SETTINGS = {
     "wifi_pass": "",
     "tasmota_ip": "",
     "govee_mac": "",
-    "wifi_mode": "sta"
+    "wifi_mode": "sta",
+    "mqtt_broker": "",
+    "mqtt_port": 1883,
+    "mqtt_user": "",
+    "mqtt_pass": "",
+    "mqtt_topic": "heizung/esp32",
+    "mqtt_publish_interval": 5  # Minuten
 }
 
 # Laufzeit-Daten (State)
@@ -419,6 +425,90 @@ async def handle_client(reader, writer):
             await writer.wait_closed()
         except: pass
 
+# -------------------------------------------------------------------------
+# MQTT TASK (nur im STA-Modus)
+# -------------------------------------------------------------------------
+async def mqtt_loop():
+    if SETTINGS.get("wifi_mode") != "sta":
+        return
+    broker = SETTINGS.get("mqtt_broker", "")
+    if not broker:
+        print("[MQTT] Kein Broker konfiguriert, MQTT deaktiviert.")
+        return
+
+    try:
+        from umqtt.simple import MQTTClient
+    except ImportError:
+        print("[MQTT] umqtt.simple nicht verfügbar.")
+        return
+
+    topic_base = SETTINGS.get("mqtt_topic", "heizung/esp32")
+    topic_status = (topic_base + "/status").encode()
+    topic_set_temp = (topic_base + "/set/target_temp").encode()
+
+    def on_message(topic, msg):
+        try:
+            val = float(msg.decode())
+            SETTINGS["target_temp"] = val
+            save_settings()
+            print(f"[MQTT] Neue Zieltemperatur: {val}")
+        except Exception as e:
+            print(f"[MQTT] Ungültige Nachricht: {e}")
+
+    mqtt_user = SETTINGS.get("mqtt_user") or None
+    mqtt_pass = SETTINGS.get("mqtt_pass") or None
+    client = MQTTClient(
+        client_id="esp32_heizung",
+        server=broker,
+        port=int(SETTINGS.get("mqtt_port", 1883)),
+        user=mqtt_user,
+        password=mqtt_pass,
+        keepalive=60
+    )
+    client.set_callback(on_message)
+
+    connected = False
+    last_publish = 0
+    interval_s = int(SETTINGS.get("mqtt_publish_interval", 5) * 60)
+
+    while True:
+        if not connected:
+            try:
+                client.connect()
+                client.subscribe(topic_set_temp)
+                connected = True
+                print(f"[MQTT] Verbunden mit {broker}, Topic-Basis: {topic_base}")
+            except Exception as e:
+                print(f"[MQTT] Verbindungsfehler: {e}, erneuter Versuch in 30s")
+                await asyncio.sleep(30)
+                continue
+
+        try:
+            client.check_msg()  # nicht-blockierend
+
+            now = time.time()
+            if now - last_publish >= interval_s:
+                payload = json.dumps({
+                    "target_temp": SETTINGS["target_temp"],
+                    "current_temp": STATE["current_temp"],
+                    "current_hum": STATE["current_hum"],
+                    "heating": STATE["heating"]
+                })
+                client.publish(topic_status, payload)
+                last_publish = now
+                print("[MQTT] Status veröffentlicht")
+
+        except Exception as e:
+            print(f"[MQTT] Fehler: {e}, Verbindung getrennt")
+            connected = False
+            try:
+                client.disconnect()
+            except:
+                pass
+
+        await asyncio.sleep(1)
+
+
 async def main():
     load_settings()
     wlan = await wifi_connect()
@@ -440,6 +530,7 @@ async def main():
     await asyncio.gather(
         scanner.scan_loop(),
         controller_loop(),
+        mqtt_loop(),
         server.wait_closed()
     )
 
