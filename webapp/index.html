@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Heizung Monitor</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Heizung Monitor</h1>
+      <span id="mqtt-badge" class="badge badge-disconnected">MQTT: Getrennt</span>
+    </header>
+
+    <section id="status-bar">
+      <div class="status-item">
+        <span class="label">Temperatur</span>
+        <span id="val-temp" class="value">–</span>
+      </div>
+      <div class="status-item">
+        <span class="label">Zieltemperatur</span>
+        <span id="val-target" class="value">–</span>
+      </div>
+      <div class="status-item">
+        <span class="label">Luftfeuchtigkeit</span>
+        <span id="val-hum" class="value">–</span>
+      </div>
+      <div class="status-item">
+        <span class="label">Heizung</span>
+        <span id="val-heating" class="value">–</span>
+      </div>
+    </section>
+
+    <section id="controls">
+      <div id="target-control">
+        <label for="target-input">Zieltemperatur (°C):</label>
+        <input
+          type="number"
+          id="target-input"
+          step="0.5"
+          min="5"
+          max="30"
+          placeholder="z.B. 20.0"
+          disabled
+        />
+        <button id="target-btn" disabled>Setzen</button>
+      </div>
+      <div id="zoom-controls">
+        <span class="label">Zeitraum:</span>
+        <button class="zoom-btn" data-hours="1">1h</button>
+        <button class="zoom-btn" data-hours="6">6h</button>
+        <button class="zoom-btn active" data-hours="12">12h</button>
+        <button class="zoom-btn" data-hours="24">24h</button>
+        <button class="zoom-btn" data-hours="48">48h</button>
+        <button id="zoom-reset-btn">Zoom zurücksetzen</button>
+      </div>
+    </section>
+
+    <section id="chart-container">
+      <canvas id="main-chart"></canvas>
+    </section>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

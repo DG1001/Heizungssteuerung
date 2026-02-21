@@ -83,3 +83,46 @@ IPAddress4 192.168.4.1
 WifiConfig 5
 Restart 1
 ```
+
+## Web App (`webapp/`)
+
+Browser-based monitoring app that subscribes to the ESP32's MQTT feed via WebSocket.
+
+### Stack
+- **Vite 5** — dev server (binds `0.0.0.0:3000` for xaresaicoder proxy), ESM bundling
+- **Chart.js v4** + `chartjs-adapter-date-fns` + `chartjs-plugin-zoom` + `chartjs-plugin-annotation`
+- **mqtt.js v5** — WebSocket MQTT client (requires `global: 'globalThis'` polyfill in `vite.config.js`)
+- **IndexedDB** — persists last 72 h of measurements, loads last 48 h on startup
+
+### Structure
+```
+webapp/
+├── .env.example       # copy to .env and fill in MQTT credentials
+├── .env               # gitignored — contains secrets
+├── package.json
+├── vite.config.js     # host: 0.0.0.0, port: 3000, global polyfill
+├── index.html
+└── src/
+    ├── main.js        # chart, MQTT, controls, heatingBgPlugin
+    ├── db.js          # IndexedDB wrapper
+    └── style.css
+```
+
+### Development
+```bash
+cd webapp
+cp .env.example .env   # then edit .env
+npm install
+npm run dev            # → http://<projectid>-3000.localhost/
+```
+
+### MQTT topics (derived from `VITE_MQTT_TOPIC`)
+- Subscribe: `{topic}/status` — JSON `{target_temp, current_temp, current_hum, heating}`
+- Publish:   `{topic}/set/target_temp` — plain float string
+
+### Mosquitto WebSocket setup
+Add to `mosquitto.conf`:
+```
+listener 9001
+protocol websockets
+```

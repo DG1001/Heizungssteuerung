@@ -1,0 +1,227 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #1a1a2e;
+  --surface: #16213e;
+  --surface2: #0f3460;
+  --accent-orange: #e94560;
+  --accent-blue: #4fc3f7;
+  --accent-yellow: #ffd54f;
+  --text: #e0e0e0;
+  --text-muted: #9e9e9e;
+  --heating-on: rgba(233, 69, 60, 0.15);
+  --radius: 8px;
+  --gap: 12px;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: var(--gap);
+  gap: var(--gap);
+}
+
+/* ── Header ── */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--gap);
+  border-bottom: 1px solid var(--surface2);
+}
+
+header h1 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.badge {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: background 0.3s, color 0.3s;
+}
+
+.badge-connected {
+  background: #2e7d32;
+  color: #a5d6a7;
+}
+
+.badge-disconnected {
+  background: #4a1010;
+  color: #ef9a9a;
+}
+
+.badge-connecting {
+  background: #4a3a00;
+  color: var(--accent-yellow);
+}
+
+/* ── Status bar ── */
+#status-bar {
+  display: flex;
+  gap: var(--gap);
+  flex-wrap: wrap;
+}
+
+.status-item {
+  background: var(--surface);
+  border: 1px solid var(--surface2);
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  flex: 1 1 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.status-item .label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.status-item .value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+#val-heating.on  { color: var(--accent-orange); }
+#val-heating.off { color: var(--accent-blue); }
+
+/* ── Controls ── */
+#controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap);
+  justify-content: space-between;
+}
+
+#target-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#target-control label {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+#target-input {
+  width: 80px;
+  padding: 6px 8px;
+  background: var(--surface);
+  border: 1px solid var(--surface2);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+#target-input:focus {
+  outline: none;
+  border-color: var(--accent-orange);
+}
+
+#target-input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+button {
+  padding: 6px 14px;
+  border: 1px solid var(--surface2);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+button:hover:not(:disabled) {
+  background: var(--surface2);
+  border-color: var(--accent-blue);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+#target-btn {
+  background: var(--accent-orange);
+  border-color: var(--accent-orange);
+  color: #fff;
+  font-weight: 600;
+}
+
+#target-btn:hover:not(:disabled) {
+  background: #c73652;
+  border-color: #c73652;
+}
+
+#zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+#zoom-controls .label {
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+
+.zoom-btn.active {
+  background: var(--surface2);
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+#zoom-reset-btn {
+  margin-left: 6px;
+  border-color: var(--accent-yellow);
+  color: var(--accent-yellow);
+}
+
+#zoom-reset-btn:hover:not(:disabled) {
+  background: rgba(255, 213, 79, 0.1);
+}
+
+/* ── Chart ── */
+#chart-container {
+  flex: 1;
+  min-height: 0;
+  background: var(--surface);
+  border: 1px solid var(--surface2);
+  border-radius: var(--radius);
+  padding: 12px;
+  position: relative;
+}
+
+#main-chart {
+  width: 100% !important;
+  height: 100% !important;
+}

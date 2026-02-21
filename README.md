@@ -65,6 +65,33 @@ Für MicroPython kann man einen Webinstaller verwenden (funktioniert nicht mit a
 
 Die MicroPython Software für den ESP32 wurde fast komplett mit Hilfe von Google Gemini 3 und Claude Code erstellt. Enthalten ist eine kleine Webpage, welche per u.a. Smartphone verwendet werden kann. Das frühere Chart.js zur Diagrammdarstellung wurde durch eine ressourcenschonende, selbst implementierte SVG-Grafik ersetzt. Zusätzlich unterstützt die Software im STA-Mode eine optionale MQTT-Anbindung zur Integration in Hausautomatisierungssysteme.
 
+## Web App (`webapp/`)
+
+Ergänzend zur eingebetteten Web-Oberfläche des ESP32 gibt es eine browserbasierte Monitoring-App, die per MQTT-over-WebSocket Daten empfängt und in einem interaktiven Diagramm darstellt.
+
+**Features:**
+- Temperatur- und Feuchtigkeitsverlauf in einem zoombaren Dual-Achsen-Diagramm (Mausrad, Pinch, Zeitraum-Buttons)
+- Heizphasen werden als orangefarbene Hintergrundbereiche hervorgehoben
+- Zieltemperatur als gestrichelte Linie; Setzen per Eingabefeld direkt über MQTT
+- Datenpersistenz im Browser via IndexedDB (72 h gespeichert, 48 h beim Start geladen)
+- MQTT-Verbindungsstatus-Anzeige
+
+**Voraussetzung:** Mosquitto-Broker mit aktiviertem WebSocket-Listener (Port 9001):
+```
+listener 9001
+protocol websockets
+```
+
+**Inbetriebnahme:**
+```bash
+cd webapp
+cp .env.example .env   # MQTT-URL, Zugangsdaten und Topic eintragen
+npm install
+npm run dev
+```
+
+Die `.env`-Datei mit den MQTT-Zugangsdaten wird nicht ins Repository eingecheckt (`.gitignore`).
+
 ## Disclaimer
 
 Anwendung auf eigene Gefahr. 
