@@ -238,6 +238,14 @@ function updateChart() {
   chart.data.datasets[0].data = currentData;
   chart.data.datasets[1].data = currentData;
   updateTargetAnnotation();
+
+  // Advance the visible window to "now" — triggered only on incoming MQTT
+  // messages (≤1/min), so CPU impact is negligible.
+  const now = Date.now();
+  const minTs = now - activeHours * 60 * 60 * 1000;
+  chart.options.scales.x.min = minTs;
+  chart.options.scales.x.max = now;
+
   chart.update('none');
 }
 
