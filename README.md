@@ -69,6 +69,8 @@ Die MicroPython Software für den ESP32 wurde fast komplett mit Hilfe von Google
 
 Ergänzend zur eingebetteten Web-Oberfläche des ESP32 gibt es eine browserbasierte Monitoring-App, die per MQTT-over-WebSocket Daten empfängt und in einem interaktiven Diagramm darstellt.
 
+![Web App](webapp.png)
+
 **Features:**
 - Temperatur- und Feuchtigkeitsverlauf in einem zoombaren Dual-Achsen-Diagramm (Mausrad, Pinch, Zeitraum-Buttons)
 - Heizphasen werden als orangefarbene Hintergrundbereiche hervorgehoben
